@@ -9,15 +9,16 @@ module.exports = async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        filter: { value: "database", property: "object" },
+        filter: { value: "data_source", property: "object" },
       }),
     });
     const data = await response.json();
-    const simplified = (data.results || []).map((db) => ({
-      id: db.id,
-      title: db.title?.map((t) => t.plain_text).join("") || "(untitled)",
+    const simplified = (data.results || []).map((ds) => ({
+      id: ds.id,
+      title: ds.title?.map((t) => t.plain_text).join("") || "(untitled)",
+      parent_database_id: ds.parent?.database_id || null,
     }));
-    res.status(200).json({ accessibleDatabases: simplified, raw: data });
+    res.status(200).json({ accessibleDataSources: simplified, raw: data });
   } catch (err) {
     res.status(500).json({ error: String(err.message || err) });
   }
