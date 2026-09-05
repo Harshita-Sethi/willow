@@ -1,15 +1,5 @@
 const NOTION_VERSION = "2025-09-03";
 
-  if (!response.ok) {
-    throw new Error(`Notion API error fetching database ${databaseId}: ${response.status} ${await response.text()}`);
-  }
-  const data = await response.json();
-  if (!data.data_sources || data.data_sources.length === 0) {
-    throw new Error(`No data sources found for database ${databaseId}`);
-  }
-  return data.data_sources[0].id;
-}
-
 async function queryDatabase(dataSourceId, token) {
   let results = [];
   let cursor;
@@ -28,16 +18,6 @@ async function queryDatabase(dataSourceId, token) {
     );
     if (!response.ok) {
       throw new Error(`Notion API error (${dataSourceId}): ${response.status} ${await response.text()}`);
-    }
-    const data = await response.json();
-    results = results.concat(data.results);
-    cursor = data.has_more ? data.next_cursor : undefined;
-  } while (cursor);
-  return results;
-}
-    );
-    if (!response.ok) {
-      throw new Error(`Notion API error (${databaseId}): ${response.status} ${await response.text()}`);
     }
     const data = await response.json();
     results = results.concat(data.results);
@@ -118,24 +98,4 @@ module.exports = async (req, res) => {
       const quests = questsByBranch[page.id] || [];
       let minDays = daysSince(page.last_edited_time);
       let lastTended = page.last_edited_time;
-      for (const q of quests) {
-        if (daysSince(q.lastEdited) < minDays) { minDays = daysSince(q.lastEdited); lastTended = q.lastEdited; }
-        for (const s of q.steps) {
-          if (daysSince(s.lastEdited) < minDays) { minDays = daysSince(s.lastEdited); lastTended = s.lastEdited; }
-        }
-      }
-      return {
-        id: page.id,
-        name: getTitle(page, "Branch"),
-        health: minDays > 14 ? "needs_watering" : "alive",
-        lastTended,
-        quests,
-      };
-    });
-
-    res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ branches, generatedAt: new Date().toISOString() });
-  } catch (err) {
-    res.status(500).json({ error: String(err.message || err) });
-  }
-};
+      for (const q
