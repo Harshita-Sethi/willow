@@ -1,3 +1,4 @@
+   console.log("VERSION_CHECK_12345");
 const NOTION_VERSION = "2025-09-03";
 
 async function queryDatabase(dataSourceId, token) {
