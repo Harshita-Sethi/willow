@@ -15,7 +15,7 @@
 <script>
 const REFRESH_MS = 30000;
 const LEAF_COLORS = { "New leaf": "#B9F6CA", "Growing": "#2ECC71", "Grown": "#B39DDB" };
-const BRANCH_COLORS = { alive: "#7a9b6e", needs_watering: "#8a7458" };
+const BRANCH_COLORS = { alive: "#8fae7e", needs_watering: "#a68a5f" };
 
 function hashSeed(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return h; }
 function seededRand(seed){ let t=seed+=0x6D2B79F5; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }
@@ -25,54 +25,66 @@ function svgEl(tag, attrs){ const el=document.createElementNS("http://www.w3.org
 function render(data){
   const svg = document.getElementById("tree");
   svg.innerHTML = "";
-  svg.appendChild(svgEl("line",{x1:0,y1:640,x2:1000,y2:640,stroke:"#2b3a2b","stroke-width":2}));
-  svg.appendChild(svgEl("path",{d:"M 500,640 C 480,500 520,300 500,140",stroke:"#5c4a3a","stroke-width":14,fill:"none","stroke-linecap":"round"}));
+
+  // ground line
+  svg.appendChild(svgEl("line",{x1:0,y1:660,x2:1000,y2:660,stroke:"#2b3a2b","stroke-width":2}));
+
+  // trunk
+  svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#5c4a3a","stroke-width":18,fill:"none","stroke-linecap":"round"}));
+  svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#4a3a2c","stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.5}));
 
   const branches = data.branches || [];
   const n = Math.max(branches.length, 1);
+  const spread = Math.min(420, 90 * n);
 
   branches.forEach((branch, i) => {
     const seed = hashSeed(branch.id);
     const rand = (o) => seededRand(seed + o);
-    const p0 = { x: 500, y: 150 + (i % 3) * 10 };
-    const p3 = { x: 500 + (rand(1)-0.5)*2*300*((i+1)/n)*(i%2===0?1:-1), y: 350 + rand(2)*250 };
-    const c1 = { x: p0.x + (p3.x-p0.x)*0.3, y: p0.y + 80 };
-    const c2 = { x: p0.x + (p3.x-p0.x)*0.7, y: p3.y - 60 };
-    const color = BRANCH_COLORS[branch.health] || BRANCH_COLORS.alive;
 
-    const path = svgEl("path",{d:`M ${p0.x},${p0.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${p3.x},${p3.y}`,stroke:color,"stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.9});
+    // spread branch start points along the upper trunk, alternating sides
+    const frac = n === 1 ? 0.5 : i/(n-1);
+    const side = i % 2 === 0 ? 1 : -1;
+    const p0 = { x: 500, y: 140 + frac*120 };
+    const reach = 140 + rand(3)*160;
+    const p3 = { x: 500 + side*(spread*0.3 + reach*0.4), y: 380 + rand(1)*220 };
+    const c1 = { x: p0.x + side*reach*0.5, y: p0.y + 40 + rand(4)*40 };
+    const c2 = { x: p3.x - side*40, y: p3.y - 100 - rand(5)*60 };
+
+    const color = BRANCH_COLORS[branch.health] || BRANCH_COLORS.alive;
+    const path = svgEl("path",{d:`M ${p0.x},${p0.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${p3.x},${p3.y}`,stroke:color,"stroke-width":5,fill:"none","stroke-linecap":"round",opacity:0.85});
     const title = svgEl("title",{}); title.textContent = `${branch.name} — ${branch.health === "alive" ? "Alive" : "Needs watering"}`;
     path.appendChild(title); svg.appendChild(path);
 
     const quests = branch.quests || [];
     const m = Math.max(quests.length, 1);
     quests.forEach((quest, j) => {
-      const t = 0.35 + 0.55 * ((j+1)/(m+1));
+      const t = 0.3 + 0.6 * ((j+1)/(m+1));
       const base = pointOnCubic(p0,c1,c2,p3,t);
       const qseed = hashSeed(quest.id);
       const qrand = (o) => seededRand(qseed+o);
-      const tEndX = base.x + (qrand(1)-0.5)*160;
-      const tEndY = base.y + 60 + qrand(2)*90;
-      const tc1 = { x: base.x+(tEndX-base.x)*0.3, y: base.y+20 };
-      const tc2 = { x: base.x+(tEndX-base.x)*0.7, y: tEndY-20 };
-      const tp3 = { x: tEndX, y: tEndY };
+      const tEndX = base.x + (qrand(1)-0.5)*100 + side*20;
+      const tEndY = base.y + 70 + qrand(2)*90;
+      const tc1 = { x: base.x+(tEndX-base.x)*0.3, y: base.y+25 };
+      const tc2 = { x: base.x+(tEndX-base.x)*0.7, y: tEndY-25 };
 
-      svg.appendChild(svgEl("path",{d:`M ${base.x},${base.y} C ${tc1.x},${tc1.y} ${tc2.x},${tc2.y} ${tp3.x},${tp3.y}`,stroke:color,"stroke-width":2.5,fill:"none",opacity:0.75}));
+      svg.appendChild(svgEl("path",{d:`M ${base.x},${base.y} C ${tc1.x},${tc1.y} ${tc2.x},${tc2.y} ${tEndX},${tEndY}`,stroke:color,"stroke-width":2,fill:"none",opacity:0.7}));
 
       const steps = quest.steps || [];
       if (steps.length === 0){
         const leafColor = LEAF_COLORS[quest.leafStage] || "#88a888";
-        const leaf = svgEl("circle",{cx:tp3.x,cy:tp3.y,r:7,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5});
+        const leaf = svgEl("circle",{cx:tEndX,cy:tEndY,r:7,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5});
         const t2 = svgEl("title",{}); t2.textContent = `${quest.name} — ${quest.leafStage||"no stage"}`;
         leaf.appendChild(t2); svg.appendChild(leaf);
       } else {
-        steps.forEach((step) => {
-          const lseed = hashSeed(step.id);
+        steps.forEach((step, k) => {
+          const lseed = hashSeed(step.id + k);
           const lrand = (o) => seededRand(lseed+o);
-          const lx = tp3.x + (lrand(1)-0.5)*36;
-          const ly = tp3.y + lrand(2)*26;
+          const angle = lrand(1) * Math.PI * 2;
+          const dist = 8 + lrand(2)*22;
+          const lx = tEndX + Math.cos(angle)*dist;
+          const ly = tEndY + Math.sin(angle)*dist*0.6 + 6;
           const leafColor = LEAF_COLORS[step.leafStage] || "#88a888";
-          const leaf = svgEl("circle",{cx:lx,cy:ly,r:5,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5});
+          const leaf = svgEl("ellipse",{cx:lx,cy:ly,rx:6,ry:8,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5,transform:`rotate(${lrand(3)*40-20} ${lx} ${ly})`});
           const t3 = svgEl("title",{}); t3.textContent = `${step.name} — ${step.leafStage||"no stage"}`;
           leaf.appendChild(t3); svg.appendChild(leaf);
         });
@@ -93,6 +105,3 @@ async function refresh(){
 }
 refresh();
 setInterval(refresh, REFRESH_MS);
-</script>
-</body>
-</html>
