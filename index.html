@@ -29,7 +29,6 @@ function render(data){
 
   const trunkTop = { x: 500, y: 330 };
   svg.appendChild(svgEl("path",{d:"M 460,715 C 455,600 475,470 495,400 C 498,370 500,350 "+trunkTop.x+","+trunkTop.y,stroke:"#4a3527","stroke-width":34,fill:"none","stroke-linecap":"round"}));
-  svg.appendChild(svgEl("path",{d:"M 500,715 C 505,600 490,470 500,400",stroke:"#3a2a1e","stroke-width":10,fill:"none","stroke-linecap":"round",opacity:0.6}));
 
   const branches = data.branches || [];
   const n = Math.max(branches.length, 1);
