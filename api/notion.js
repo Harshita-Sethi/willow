@@ -98,4 +98,24 @@ module.exports = async (req, res) => {
       const quests = questsByBranch[page.id] || [];
       let minDays = daysSince(page.last_edited_time);
       let lastTended = page.last_edited_time;
-      for (const q
+      for (const q of quests) {
+        if (daysSince(q.lastEdited) < minDays) { minDays = daysSince(q.lastEdited); lastTended = q.lastEdited; }
+        for (const s of q.steps) {
+          if (daysSince(s.lastEdited) < minDays) { minDays = daysSince(s.lastEdited); lastTended = s.lastEdited; }
+        }
+      }
+      return {
+        id: page.id,
+        name: getTitle(page, "Branch"),
+        health: minDays > 14 ? "needs_watering" : "alive",
+        lastTended,
+        quests,
+      };
+    });
+
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json({ branches, generatedAt: new Date().toISOString() });
+  } catch (err) {
+    res.status(500).json({ error: String(err.message || err) });
+  }
+};
