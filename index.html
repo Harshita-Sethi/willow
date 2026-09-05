@@ -28,8 +28,19 @@ function render(data){
   svg.innerHTML = "";
 
   const trunkTop = { x: 500, y: 330 };
-  svg.appendChild(svgEl("path",{d:"M 460,715 C 455,600 475,470 495,400 C 498,370 500,350 "+trunkTop.x+","+trunkTop.y,stroke:"#4a3527","stroke-width":34,fill:"none","stroke-linecap":"round"}));
-
+  const trunkPath = `
+    M 445,720
+    C 440,650 458,600 468,540
+    C 478,470 485,400 493,340
+    C 496,336 500,332 ${trunkTop.x},${trunkTop.y}
+    C ${trunkTop.x+8},332 ${trunkTop.x+14},336 512,340
+    C 520,400 528,470 538,540
+    C 548,600 566,650 560,720
+    Z
+  `;
+  svg.appendChild(svgEl("path",{d:trunkPath, fill:"#4a3527", stroke:"none"}));
+  svg.appendChild(svgEl("path",{d:"M 480,720 C 478,640 490,560 496,480", stroke:"#3a2a1e","stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.4}));
+    
   const branches = data.branches || [];
   const n = Math.max(branches.length, 1);
 
@@ -99,7 +110,7 @@ function render(data){
         const angle = (lrand(4)-0.5) * 30;
         const leafColor = LEAF_COLORS[leafItem.leafStage] || "#88a888";
         const lx = lp.x + jitter, ly = lp.y;
-        const leafLen = 16, leafWid = 3.5;
+        const leafLen = 20, leafWid = 4.5;
         const leafPath = `M ${lx},${ly-leafLen*0.6} Q ${lx+leafWid},${ly-leafLen*0.1} ${lx},${ly+leafLen*0.4} Q ${lx-leafWid},${ly-leafLen*0.1} ${lx},${ly-leafLen*0.6} Z`;
         const leaf = svgEl("path",{
           d: leafPath,
