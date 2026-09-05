@@ -5,7 +5,7 @@
 <title>Weeping Willow — Quests</title>
 <style>
   html, body { margin:0; padding:0; background:#feeac7; height:100%; }
-  #status { position:fixed; top:10px; left:10px; color:#cbd9c9; font-family: system-ui, sans-serif; font-size:13px; opacity:0.8; }
+  #status { position:fixed; top:10px; left:10px; color:#4a3527; font-family: system-ui, sans-serif; font-size:13px; opacity:0.8; }
   svg { display:block; width:100%; height:100vh; }
 </style>
 </head>
@@ -26,8 +26,6 @@ function svgEl(tag, attrs){ const el=document.createElementNS("http://www.w3.org
 function render(data){
   const svg = document.getElementById("tree");
   svg.innerHTML = "";
-
-  svg.appendChild(svgEl("ellipse",{cx:500,cy:715,rx:140,ry:14,fill:"#000","opacity":0.25}));
 
   const trunkTop = { x: 500, y: 330 };
   svg.appendChild(svgEl("path",{d:"M 460,715 C 455,600 475,470 495,400 C 498,370 500,350 "+trunkTop.x+","+trunkTop.y,stroke:"#4a3527","stroke-width":34,fill:"none","stroke-linecap":"round"}));
@@ -101,11 +99,14 @@ function render(data){
         const lrand = (o) => seededRand(lseed+o);
         const jitter = (lrand(1)-0.5) * 14;
         const leafColor = LEAF_COLORS[leafItem.leafStage] || "#88a888";
-        const leaf = svgEl("ellipse",{
-          cx: lp.x + jitter, cy: lp.y, rx:4, ry:8,
+        const lx = lp.x + jitter, ly = lp.y;
+        const leafLen = 14, leafWid = 4;
+        const leafPath = `M ${lx},${ly-leafLen/2} Q ${lx+leafWid},${ly} ${lx},${ly+leafLen/2} Q ${lx-leafWid},${ly} ${lx},${ly-leafLen/2} Z`;
+        const leaf = svgEl("path",{
+          d: leafPath,
           fill:leafColor, stroke:"#1e2b1e","stroke-width":0.4,
-          transform:`rotate(${angle} ${lp.x+jitter} ${lp.y})`
-        });
+          transform:`rotate(${angle} ${lx} ${ly})`
+});
         const t3 = svgEl("title",{}); t3.textContent = leafItem.name + " — " + (leafItem.leafStage || "no stage");
         leaf.appendChild(t3); svg.appendChild(leaf);
       });
