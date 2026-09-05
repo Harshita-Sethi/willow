@@ -39,7 +39,6 @@ function render(data){
     Z
   `;
   svg.appendChild(svgEl("path",{d:trunkPath, fill:"#4a3527", stroke:"none"}));
-  svg.appendChild(svgEl("path",{d:"M 480,720 C 478,640 490,560 496,480", stroke:"#3a2a1e","stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.4}));
     
   const branches = data.branches || [];
   const n = Math.max(branches.length, 1);
