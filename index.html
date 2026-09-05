@@ -93,14 +93,14 @@ function render(data){
       leavesData.forEach((leafItem, k) => {
         const lt = (k+1) / (leafCount+1);
         const lp = pointOnCubic(base, sc1, sc2, {x:strandEndX,y:strandEndY}, lt);
-        const angle = tangentOnCubic(base, sc1, sc2, {x:strandEndX,y:strandEndY}, lt);
         const lseed = hashSeed(leafItem.id + k);
         const lrand = (o) => seededRand(lseed+o);
         const jitter = (lrand(1)-0.5) * 14;
+        const angle = (lrand(4)-0.5) * 30;
         const leafColor = LEAF_COLORS[leafItem.leafStage] || "#88a888";
         const lx = lp.x + jitter, ly = lp.y;
-        const leafLen = 14, leafWid = 4;
-        const leafPath = `M ${lx},${ly-leafLen/2} Q ${lx+leafWid},${ly} ${lx},${ly+leafLen/2} Q ${lx-leafWid},${ly} ${lx},${ly-leafLen/2} Z`;
+        const leafLen = 16, leafWid = 3.5;
+        const leafPath = `M ${lx},${ly-leafLen*0.6} Q ${lx+leafWid},${ly-leafLen*0.1} ${lx},${ly+leafLen*0.4} Q ${lx-leafWid},${ly-leafLen*0.1} ${lx},${ly-leafLen*0.6} Z`;
         const leaf = svgEl("path",{
           d: leafPath,
           fill:leafColor, stroke:"#1e2b1e","stroke-width":0.4,
