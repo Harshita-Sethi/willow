@@ -26,10 +26,8 @@ function render(data){
   const svg = document.getElementById("tree");
   svg.innerHTML = "";
 
-  // ground line
   svg.appendChild(svgEl("line",{x1:0,y1:660,x2:1000,y2:660,stroke:"#2b3a2b","stroke-width":2}));
 
-  // trunk
   svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#5c4a3a","stroke-width":18,fill:"none","stroke-linecap":"round"}));
   svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#4a3a2c","stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.5}));
 
@@ -41,7 +39,6 @@ function render(data){
     const seed = hashSeed(branch.id);
     const rand = (o) => seededRand(seed + o);
 
-    // spread branch start points along the upper trunk, alternating sides
     const frac = n === 1 ? 0.5 : i/(n-1);
     const side = i % 2 === 0 ? 1 : -1;
     const p0 = { x: 500, y: 140 + frac*120 };
@@ -52,7 +49,7 @@ function render(data){
 
     const color = BRANCH_COLORS[branch.health] || BRANCH_COLORS.alive;
     const path = svgEl("path",{d:`M ${p0.x},${p0.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${p3.x},${p3.y}`,stroke:color,"stroke-width":5,fill:"none","stroke-linecap":"round",opacity:0.85});
-    const title = svgEl("title",{}); title.textContent = `${branch.name} — ${branch.health === "alive" ? "Alive" : "Needs watering"}`;
+    const title = svgEl("title",{}); title.textContent = branch.name + " — " + (branch.health === "alive" ? "Alive" : "Needs watering");
     path.appendChild(title); svg.appendChild(path);
 
     const quests = branch.quests || [];
@@ -73,7 +70,7 @@ function render(data){
       if (steps.length === 0){
         const leafColor = LEAF_COLORS[quest.leafStage] || "#88a888";
         const leaf = svgEl("circle",{cx:tEndX,cy:tEndY,r:7,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5});
-        const t2 = svgEl("title",{}); t2.textContent = `${quest.name} — ${quest.leafStage||"no stage"}`;
+        const t2 = svgEl("title",{}); t2.textContent = quest.name + " — " + (quest.leafStage || "no stage");
         leaf.appendChild(t2); svg.appendChild(leaf);
       } else {
         steps.forEach((step, k) => {
@@ -84,8 +81,8 @@ function render(data){
           const lx = tEndX + Math.cos(angle)*dist;
           const ly = tEndY + Math.sin(angle)*dist*0.6 + 6;
           const leafColor = LEAF_COLORS[step.leafStage] || "#88a888";
-          const leaf = svgEl("ellipse",{cx:lx,cy:ly,rx:6,ry:8,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5,transform:`rotate(${lrand(3)*40-20} ${lx} ${ly})`});
-          const t3 = svgEl("title",{}); t3.textContent = `${step.name} — ${step.leafStage||"no stage"}`;
+          const leaf = svgEl("ellipse",{cx:lx,cy:ly,rx:6,ry:8,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5,transform:"rotate(" + (lrand(3)*40-20) + " " + lx + " " + ly + ")"});
+          const t3 = svgEl("title",{}); t3.textContent = step.name + " — " + (step.leafStage || "no stage");
           leaf.appendChild(t3); svg.appendChild(leaf);
         });
       }
@@ -105,3 +102,6 @@ async function refresh(){
 }
 refresh();
 setInterval(refresh, REFRESH_MS);
+</script>
+</body>
+</html>
