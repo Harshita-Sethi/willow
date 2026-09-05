@@ -4,88 +4,111 @@
 <meta charset="utf-8" />
 <title>Weeping Willow — Quests</title>
 <style>
-  html, body { margin:0; padding:0; background:#0e1a12; height:100%; }
+  html, body { margin:0; padding:0; background:#feeac7; height:100%; }
   #status { position:fixed; top:10px; left:10px; color:#cbd9c9; font-family: system-ui, sans-serif; font-size:13px; opacity:0.8; }
   svg { display:block; width:100%; height:100vh; }
 </style>
 </head>
 <body>
 <div id="status">Loading…</div>
-<svg id="tree" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid meet"></svg>
+<svg id="tree" viewBox="0 0 1000 760" preserveAspectRatio="xMidYMid meet"></svg>
 <script>
 const REFRESH_MS = 30000;
-const LEAF_COLORS = { "New leaf": "#B9F6CA", "Growing": "#2ECC71", "Grown": "#B39DDB" };
-const BRANCH_COLORS = { alive: "#8fae7e", needs_watering: "#a68a5f" };
+const LEAF_COLORS = { "New leaf": "#dde5b6", "Growing": "#adc178", "Grown": "#B39DDB" };
+const BRANCH_COLORS = { alive: "#c9a86a", needs_watering: "#8a7458" };
 
 function hashSeed(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return h; }
 function seededRand(seed){ let t=seed+=0x6D2B79F5; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }
 function pointOnCubic(p0,p1,p2,p3,t){ const mt=1-t; return { x: mt*mt*mt*p0.x+3*mt*mt*t*p1.x+3*mt*t*t*p2.x+t*t*t*p3.x, y: mt*mt*mt*p0.y+3*mt*mt*t*p1.y+3*mt*t*t*p2.y+t*t*t*p3.y }; }
+function tangentOnCubic(p0,p1,p2,p3,t){ const mt=1-t; const dx=3*mt*mt*(p1.x-p0.x)+6*mt*t*(p2.x-p1.x)+3*t*t*(p3.x-p2.x); const dy=3*mt*mt*(p1.y-p0.y)+6*mt*t*(p2.y-p1.y)+3*t*t*(p3.y-p2.y); return Math.atan2(dy,dx)*180/Math.PI; }
 function svgEl(tag, attrs){ const el=document.createElementNS("http://www.w3.org/2000/svg", tag); for(const k in attrs) el.setAttribute(k, attrs[k]); return el; }
 
 function render(data){
   const svg = document.getElementById("tree");
   svg.innerHTML = "";
 
-  svg.appendChild(svgEl("line",{x1:0,y1:660,x2:1000,y2:660,stroke:"#2b3a2b","stroke-width":2}));
+  svg.appendChild(svgEl("ellipse",{cx:500,cy:715,rx:140,ry:14,fill:"#000","opacity":0.25}));
 
-  svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#5c4a3a","stroke-width":18,fill:"none","stroke-linecap":"round"}));
-  svg.appendChild(svgEl("path",{d:"M 500,660 C 470,520 530,320 500,120",stroke:"#4a3a2c","stroke-width":6,fill:"none","stroke-linecap":"round",opacity:0.5}));
+  const trunkTop = { x: 500, y: 330 };
+  svg.appendChild(svgEl("path",{d:"M 460,715 C 455,600 475,470 495,400 C 498,370 500,350 "+trunkTop.x+","+trunkTop.y,stroke:"#4a3527","stroke-width":34,fill:"none","stroke-linecap":"round"}));
+  svg.appendChild(svgEl("path",{d:"M 500,715 C 505,600 490,470 500,400",stroke:"#3a2a1e","stroke-width":10,fill:"none","stroke-linecap":"round",opacity:0.6}));
 
   const branches = data.branches || [];
   const n = Math.max(branches.length, 1);
-  const spread = Math.min(420, 90 * n);
 
   branches.forEach((branch, i) => {
     const seed = hashSeed(branch.id);
     const rand = (o) => seededRand(seed + o);
 
     const frac = n === 1 ? 0.5 : i/(n-1);
-    const side = i % 2 === 0 ? 1 : -1;
-    const p0 = { x: 500, y: 140 + frac*120 };
-    const reach = 140 + rand(3)*160;
-    const p3 = { x: 500 + side*(spread*0.3 + reach*0.4), y: 380 + rand(1)*220 };
-    const c1 = { x: p0.x + side*reach*0.5, y: p0.y + 40 + rand(4)*40 };
-    const c2 = { x: p3.x - side*40, y: p3.y - 100 - rand(5)*60 };
+    const side = frac < 0.5 ? -1 : 1;
+    const spreadX = (frac - 0.5) * 2;
+    const archPeakX = 500 + spreadX * (260 + rand(1)*100);
+    const archPeakY = 90 + rand(2)*70;
+    const archEndX = 500 + spreadX * (380 + rand(3)*140);
+    const archEndY = 220 + rand(4)*90;
+
+    const p0 = trunkTop;
+    const c1 = { x: trunkTop.x + spreadX*80, y: trunkTop.y - 120 - rand(5)*40 };
+    const c2 = { x: archPeakX - spreadX*60, y: archPeakY - 10 };
+    const peak = { x: archPeakX, y: archPeakY };
+
+    const c3 = { x: archPeakX + spreadX*60, y: archPeakY + 40 };
+    const c4 = { x: archEndX - spreadX*30, y: archEndY - 60 };
+    const end = { x: archEndX, y: archEndY };
 
     const color = BRANCH_COLORS[branch.health] || BRANCH_COLORS.alive;
-    const path = svgEl("path",{d:`M ${p0.x},${p0.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${p3.x},${p3.y}`,stroke:color,"stroke-width":5,fill:"none","stroke-linecap":"round",opacity:0.85});
+
+    const armPath = `M ${p0.x},${p0.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${peak.x},${peak.y} C ${c3.x},${c3.y} ${c4.x},${c4.y} ${end.x},${end.y}`;
+    const path = svgEl("path",{d:armPath,stroke:color,"stroke-width":9,fill:"none","stroke-linecap":"round",opacity:0.95});
     const title = svgEl("title",{}); title.textContent = branch.name + " — " + (branch.health === "alive" ? "Alive" : "Needs watering");
     path.appendChild(title); svg.appendChild(path);
 
     const quests = branch.quests || [];
     const m = Math.max(quests.length, 1);
+
     quests.forEach((quest, j) => {
-      const t = 0.3 + 0.6 * ((j+1)/(m+1));
-      const base = pointOnCubic(p0,c1,c2,p3,t);
+      const t = 0.15 + 0.8 * ((j+1)/(m+1));
+      let base, tangentAngle;
+      if (t <= 1){
+        base = pointOnCubic(p0,c1,c2,peak,t);
+        tangentAngle = tangentOnCubic(p0,c1,c2,peak,t);
+      }
+      const t2 = 0.2 + 0.75 * ((j+1)/(m+1));
+      base = pointOnCubic(peak,c3,c4,end,t2);
+
       const qseed = hashSeed(quest.id);
       const qrand = (o) => seededRand(qseed+o);
-      const tEndX = base.x + (qrand(1)-0.5)*100 + side*20;
-      const tEndY = base.y + 70 + qrand(2)*90;
-      const tc1 = { x: base.x+(tEndX-base.x)*0.3, y: base.y+25 };
-      const tc2 = { x: base.x+(tEndX-base.x)*0.7, y: tEndY-25 };
+      const strandLen = 160 + qrand(1)*220;
+      const sway = (qrand(2)-0.5) * 40;
+      const strandEndX = base.x + sway;
+      const strandEndY = base.y + strandLen;
+      const sc1 = { x: base.x + sway*0.3, y: base.y + strandLen*0.35 };
+      const sc2 = { x: strandEndX - sway*0.3, y: strandEndY - strandLen*0.25 };
 
-      svg.appendChild(svgEl("path",{d:`M ${base.x},${base.y} C ${tc1.x},${tc1.y} ${tc2.x},${tc2.y} ${tEndX},${tEndY}`,stroke:color,"stroke-width":2,fill:"none",opacity:0.7}));
+      const strandPath = `M ${base.x},${base.y} C ${sc1.x},${sc1.y} ${sc2.x},${sc2.y} ${strandEndX},${strandEndY}`;
+      svg.appendChild(svgEl("path",{d:strandPath,stroke:color,"stroke-width":1.5,fill:"none",opacity:0.55}));
 
       const steps = quest.steps || [];
-      if (steps.length === 0){
-        const leafColor = LEAF_COLORS[quest.leafStage] || "#88a888";
-        const leaf = svgEl("circle",{cx:tEndX,cy:tEndY,r:7,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5});
-        const t2 = svgEl("title",{}); t2.textContent = quest.name + " — " + (quest.leafStage || "no stage");
-        leaf.appendChild(t2); svg.appendChild(leaf);
-      } else {
-        steps.forEach((step, k) => {
-          const lseed = hashSeed(step.id + k);
-          const lrand = (o) => seededRand(lseed+o);
-          const angle = lrand(1) * Math.PI * 2;
-          const dist = 8 + lrand(2)*22;
-          const lx = tEndX + Math.cos(angle)*dist;
-          const ly = tEndY + Math.sin(angle)*dist*0.6 + 6;
-          const leafColor = LEAF_COLORS[step.leafStage] || "#88a888";
-          const leaf = svgEl("ellipse",{cx:lx,cy:ly,rx:6,ry:8,fill:leafColor,stroke:"#1e2b1e","stroke-width":0.5,transform:"rotate(" + (lrand(3)*40-20) + " " + lx + " " + ly + ")"});
-          const t3 = svgEl("title",{}); t3.textContent = step.name + " — " + (step.leafStage || "no stage");
-          leaf.appendChild(t3); svg.appendChild(leaf);
+      const leafCount = steps.length > 0 ? steps.length : 1;
+      const leavesData = steps.length > 0 ? steps : [{ id: quest.id, name: quest.name, leafStage: quest.leafStage }];
+
+      leavesData.forEach((leafItem, k) => {
+        const lt = (k+1) / (leafCount+1);
+        const lp = pointOnCubic(base, sc1, sc2, {x:strandEndX,y:strandEndY}, lt);
+        const angle = tangentOnCubic(base, sc1, sc2, {x:strandEndX,y:strandEndY}, lt);
+        const lseed = hashSeed(leafItem.id + k);
+        const lrand = (o) => seededRand(lseed+o);
+        const jitter = (lrand(1)-0.5) * 14;
+        const leafColor = LEAF_COLORS[leafItem.leafStage] || "#88a888";
+        const leaf = svgEl("ellipse",{
+          cx: lp.x + jitter, cy: lp.y, rx:4, ry:8,
+          fill:leafColor, stroke:"#1e2b1e","stroke-width":0.4,
+          transform:`rotate(${angle} ${lp.x+jitter} ${lp.y})`
         });
-      }
+        const t3 = svgEl("title",{}); t3.textContent = leafItem.name + " — " + (leafItem.leafStage || "no stage");
+        leaf.appendChild(t3); svg.appendChild(leaf);
+      });
     });
   });
 }
